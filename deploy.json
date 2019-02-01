@@ -162,7 +162,7 @@
         },
         "TemplateURLs": {
             "resourceGroup": "[concat(parameters('baseUri'),'/AD/master/linkedTemplates/resourceGroup.json')]",
-            "nsgTemplate": "[concat(parameters('baseUri'),'/AD/master/linkedTemplates/adnsg.json')]",
+            "nsgTemplate": "[concat(parameters('baseUri'),'/AD/master/linkedTemplates/adNSG.json')]",
             "domainControllerVMs": "[concat(parameters('baseUri'),'/AD/master/linkedTemplates/domainControllers.json')]",
             "CreateADForestTemplate": "[concat(parameters('baseUri'),'/AD/master/linkedTemplates/CreateADForest.json')]",
             "configureADBDCTemplate": "[concat(parameters('baseUri'),'/AD/master/linkedTemplates/configureADBDC.json')]",
