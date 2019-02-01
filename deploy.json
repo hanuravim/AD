@@ -2,13 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2018-05-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "new_ResourceGroup": {
-            "type": "string",
-            "allowedValues": [
-                "Yes",
-                "No"
-            ]
-        },
         "nsgCount": {
             "type": "int",
             "maxValue": 1,
@@ -179,28 +172,6 @@
         }
     },
     "resources": [
-        {
-            "condition": "[equals(parameters('new_ResourceGroup'), 'Yes')]",
-            "type": "Microsoft.Resources/deployments",
-            "name": "ResourceGroup",
-            "apiVersion": "2018-05-01",
-            "dependsOn": [],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('TemplateURLs').resourceGroup]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters":{
-                    "ResourceGroupLocation": {
-                        "value": "[parameters('ResourceGroupLocation')]"
-                    },
-                    "ResourceGroupName": {
-                        "value": "[variables('resourceNames').ResourceGroupName]"
-                    }
-                }
-            }
-        },
         {
             "type": "Microsoft.Resources/deployments",
             "name": "nsg",
