@@ -2,6 +2,9 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "webhookURL":{
+            "type": "securestring"
+        },
         "bdc-virtualmachineName": {
             "type": "string"
         },
@@ -29,7 +32,7 @@
                     "fileUris": [
                         "https://raw.githubusercontent.com/hanuravim/demo-ems/master/ADv1/linkedTemplates/webhook_trigger.ps1"
                     ],
-                    "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File webhook_trigger.ps1"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File webhook_trigger.ps1', ' -uri ', parameters('webhookurl'))]"
                 }
             }
         }
