@@ -168,6 +168,7 @@
             "bdc_dataDiskName": "[tolower(concat('gav',parameters('shortLocation'),'-',parameters('Application_Acronym'),'-','dr','-','pdc-','dat','-','dsk','-',parameters('Role'),'00'))]"
         },
         "TemplateURLs": {
+            "resourceGroup": "[concat(parameters('baseUri'),'/AD/master/linkedTemplates/resourceGroup.json')]",
             "nsgTemplate": "[concat(parameters('baseUri'),'/AD/master/linkedTemplates/adnsg.json')]",
             "domainControllerVMs": "[concat(parameters('baseUri'),'/AD/master/linkedTemplates/domainControllers.json')]",
             "CreateADForestTemplate": "[concat(parameters('baseUri'),'/AD/master/linkedTemplates/CreateADForest.json')]",
@@ -180,11 +181,25 @@
     "resources": [
         {
             "condition": "[equals(parameters('new_ResourceGroup'), 'Yes')]",
-            "type": "Microsoft.Resources/resourceGroups",
+            "type": "Microsoft.Resources/deployments",
+            "name": "ResourceGroup",
             "apiVersion": "2018-05-01",
-            "location": "[parameters('ResourceGroupLocation')]",
-            "name": "[variables('resourceNames').ResourceGroupName]",
-            "properties": {}
+            "dependsOn": [],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('TemplateURLs').resourceGroup]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters":{
+                    "ResourceGroupLocation": {
+                        "value": "[parameters('ResourceGroupLocation')]"
+                    },
+                    "ResourceGroupName": {
+                        "value": "[variables('resourceNames').ResourceGroupName]"
+                    }
+                }
+            }
         },
         {
             "type": "Microsoft.Resources/deployments",
