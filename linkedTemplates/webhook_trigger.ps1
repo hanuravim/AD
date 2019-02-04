@@ -1,4 +1,4 @@
 $uri
 Invoke-RestMethod -Method POST -Uri $uri
-Start-Sleep 180
+Start-Sleep 300
 shutdown /r
