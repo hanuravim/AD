@@ -188,7 +188,8 @@
                 "count": "[parameters('vmCount')]"
             },
             "dependsOn": [
-                "pdcnicLoop"
+                "pdcnicLoop",
+                "[parameters('availabilitySetName')]"
             ],
             "properties": {
                 "availabilitySet": "[if(equals(parameters('AvailabilitySet'), 'Yes'), variables('availabilitySetId'), json('null'))]",
@@ -271,7 +272,8 @@
                 "count": "[parameters('vmCount')]"
             },
             "dependsOn": [
-                "bdcnicLoop"
+                "bdcnicLoop",
+                "[parameters('availabilitySetName')]"
             ],
             "properties": {
                 "availabilitySet": "[if(equals(parameters('AvailabilitySet'), 'Yes'), variables('availabilitySetId'), json('null'))]",
