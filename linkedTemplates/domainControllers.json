@@ -12,32 +12,41 @@
         "availabilitySetName": {
             "type": "string"
         },
-        "ad_vmCount": {
+        "vmCount": {
             "type": "int"
         },
-        "ad_ILB": {
-            "type": "object"
+        "adILBName": {
+            "type": "string"
         },
-        "virtualmachineName": {
+        "pdc-virtualmachineName": {
+            "type": "string"
+        },
+        "bdc-virtualmachineName": {
+            "type": "string"
+        },
+        "nicCount": {
+            "type": "int"
+        },
+        "adInternalLoadBalancerIP": {
+            "type": "string"
+        },
+        "pdc_networkInterfaceIP": {
+            "type": "string"
+        },
+        "bdc-networkInterfaceIP": {
             "type": "string"
         },
         "virtualMachineSize": {
             "type": "string"
         },
-        "vnetResourceGroup": {
+        "Subnet1Ref": {
             "type": "string"
         },
-        "virtualNetwork": {
+        "pdc-networkInterfaceName": {
             "type": "string"
         },
-        "ad_SubnetRef": {
+        "bdc-networkInterfaceName": {
             "type": "string"
-        },
-        "networkInterfaceName": {
-            "type": "string"
-        },
-        "domainController_IPs": {
-            "type": "object"
         },
         "StorageAccountType": {
             "type": "string"
@@ -45,22 +54,25 @@
         "numberOfDataDisks": {
             "type": "int"
         },
-        "osDiskName": {
+        "pdc-osDiskName": {
             "type": "string"
         },
-        "dataDiskName": {
+        "pdc-dataDiskName": {
+            "type": "string"
+        },
+        "bdc-osDiskName": {
+            "type": "string"
+        },
+        "bdc-dataDiskName": {
             "type": "string"
         },
         "DataDiskSize": {
             "type": "int"
         },
-        "domainName": {
+        "adminUsername": {
             "type": "string"
         },
-        "DomainUserName": {
-            "type": "string"
-        },
-        "DomainPassword": {
+        "adminPassword": {
             "type": "securestring"
         },
         "omsWorkspaceResourceGroup": {
@@ -92,7 +104,7 @@
         },
         {
             "apiVersion": "2018-08-01",
-            "name": "[parameters('ad_ILB').Name]",
+            "name": "[parameters('adILBName')]",
             "type": "Microsoft.Network/loadBalancers",
             "location": "[resourceGroup().location]",
             "sku": {
@@ -106,9 +118,9 @@
                         "properties": {
                             "privateIPAllocationMethod": "Static",
                             "subnet": {
-                                "id": "[resourceId(parameters('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetwork'), parameters('ad_SubnetRef'))]"
+                                "id": "[parameters('Subnet1Ref')]"
                             },
-                            "privateIPAddress": "[parameters('ad_ILB').IP]"
+                            "privateIPAddress": "[parameters('adInternalLoadBalancerIP')]"
                         }
                     }
                 ]
@@ -116,12 +128,12 @@
         },
         {
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('networkInterfaceName'), copyindex(1))]",
+            "name": "[concat(parameters('pdc-networkInterfaceName'), copyindex(1))]",
             "apiVersion": "2018-05-01",
             "location": "[resourcegroup().location]",
             "copy": {
-                "name": "nicLoop",
-                "count": "[parameters('ad_vmCount')]"
+                "name": "pdcnicLoop",
+                "count": "[parameters('nicCount')]"
             },
             "dependsOn": [],
             "properties": {
@@ -129,11 +141,37 @@
                     {
                         "name": "ipconfig1",
                         "properties": {
-                            "privateIpAddress": "[parameters('domainController_IPs')]",
+                            "privateIpAddress": "[parameters('pdc_networkInterfaceIP')]",
                             "privateIpAddressVersion": "IPv4",
                             "privateIPAllocationMethod": "Static",
                             "subnet": {
-                                "id": "[resourceId(parameters('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetwork'), parameters('ad_SubnetRef'))]"
+                                "id": "[parameters('Subnet1Ref')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(parameters('bdc-networkInterfaceName'), copyindex(1))]",
+            "apiVersion": "2018-05-01",
+            "location": "[resourcegroup().location]",
+            "copy": {
+                "name": "bdcnicLoop",
+                "count": "[parameters('nicCount')]"
+            },
+            "dependsOn": [],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIpAddress": "[parameters('bdc-networkInterfaceIP')]",
+                            "privateIpAddressVersion": "IPv4",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('Subnet1Ref')]"
                             }
                         }
                     }
@@ -142,15 +180,16 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat(parameters('virtualmachineName'), copyIndex(1))]",
+            "name": "[concat(parameters('pdc-virtualmachineName'), copyIndex(1))]",
             "apiVersion": "2018-10-01",
             "location": "[resourcegroup().location]",
             "copy": {
                 "name": "virtualMachineLoop",
-                "count": "[parameters('ad_vmCount')]"
+                "count": "[parameters('vmCount')]"
             },
             "dependsOn": [
-                "nicLoop"
+                "pdcnicLoop",
+                "[parameters('availabilitySetName')]"
             ],
             "properties": {
                 "availabilitySet": "[if(equals(parameters('AvailabilitySet'), 'Yes'), variables('availabilitySetId'), json('null'))]",
@@ -158,19 +197,19 @@
                     "vmSize": "[parameters('virtualMachineSize')]"
                 },
                 "osProfile": {
-                    "computerName": "[concat(parameters('virtualmachineName'),copyIndex(1))]",
-                    "adminUsername": "[parameters('DomainUserName')]",
-                    "adminPassword": "[parameters('DomainPassword')]"
+                    "computerName": "[concat(parameters('pdc-virtualmachineName'),copyIndex(1))]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "publisher": "MicrosoftSqlServer",
-                        "offer": "SQL2016SP1-WS2016",
-                        "sku": "Enterprise",
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2016-Datacenter",
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "[concat(parameters('osDiskName'), copyIndex(1))]",
+                        "name": "[concat(parameters('pdc-osDiskName'), copyIndex(1))]",
                         "caching": "ReadWrite",
                         "createOption": "FromImage",
                         "managedDisk": {
@@ -185,7 +224,7 @@
                                 "caching": "ReadWrite",
                                 "diskSizeGB": "[parameters('DataDiskSize')]",
                                 "lun": "[copyIndex('dataDisks')]",
-                                "name": "[concat(parameters('dataDiskName'),copyIndex(1), copyIndex('dataDisks'))]",
+                                "name": "[concat(parameters('pdc-dataDiskName'),copyIndex(1), copyIndex('dataDisks'))]",
                                 "createOption": "Empty"
                             }
                         }
@@ -194,7 +233,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('networkInterfaceName'), copyindex(1)))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('pdc-networkInterfaceName'), copyindex(1)))]"
                         }
                     ]
                 }
@@ -202,11 +241,95 @@
             "resources": [
                 {
                     "type": "extensions",
-                    "name": "logAnalytics",
+                    "name": "Microsoft.EnterpriseCloud.Monitoring",
                     "apiVersion": "2015-06-15",
                     "location": "[resourcegroup().location]",
-                    "dependson": [
-                        "[concat(parameters('virtualmachineName'), copyIndex(1))]"
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('pdc-virtualmachineName'),copyindex(1))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                        "type": "MicrosoftMonitoringAgent",
+                        "typeHandlerVersion": "1.0",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "workspaceId": "[reference(resourceId(parameters('omsWorkspaceResourceGroup'),'Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2015-03-20').customerId]"
+                        },
+                        "protectedSettings": {
+                            "workspaceKey": "[listKeys(resourceId(parameters('omsWorkspaceResourceGroup'),'Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2015-03-20').primarySharedKey]"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(parameters('bdc-virtualmachineName'), copyIndex(1))]",
+            "apiVersion": "2018-10-01",
+            "location": "[resourcegroup().location]",
+            "copy": {
+                "name": "virtualMachineLoop",
+                "count": "[parameters('vmCount')]"
+            },
+            "dependsOn": [
+                "bdcnicLoop",
+                "[parameters('availabilitySetName')]"
+            ],
+            "properties": {
+                "availabilitySet": "[if(equals(parameters('AvailabilitySet'), 'Yes'), variables('availabilitySetId'), json('null'))]",
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat(parameters('bdc-virtualmachineName'),copyIndex(1))]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2016-Datacenter",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat(parameters('bdc-osDiskName'), copyIndex(1))]",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('StorageAccountType')]"
+                        }
+                    },
+                    "copy": [
+                        {
+                            "name": "dataDisks",
+                            "count": "[parameters('numberOfDataDisks')]",
+                            "input": {
+                                "caching": "ReadWrite",
+                                "diskSizeGB": "[parameters('DataDiskSize')]",
+                                "lun": "[copyIndex('dataDisks')]",
+                                "name": "[concat(parameters('bdc-dataDiskName'),copyIndex(1), copyIndex('dataDisks'))]",
+                                "createOption": "Empty"
+                            }
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('bdc-networkInterfaceName'), copyindex(1)))]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "type": "extensions",
+                    "name": "Microsoft.EnterpriseCloud.Monitoring",
+                    "apiVersion": "2015-06-15",
+                    "location": "[resourcegroup().location]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('bdc-virtualmachineName'),copyindex(1))]"
                     ],
                     "properties": {
                         "publisher": "Microsoft.EnterpriseCloud.Monitoring",
