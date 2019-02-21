@@ -31,7 +31,7 @@
             "type": "string"
         },
         "domainController_IPs": {
-            "type": "array"
+            "type": "object"
         },
         "StorageAccountType": {
             "type": "string"
