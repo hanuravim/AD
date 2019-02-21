@@ -48,18 +48,6 @@
         "DataDiskSize": {
             "type": "int"
         },
-        "adminUsername": {
-            "type": "string"
-        },
-        "adminPassword": {
-            "type": "securestring"
-        },
-        "omsWorkspaceResourceGroup": {
-            "type": "string"
-        },
-        "omsWorkspaceName": {
-            "type": "string"
-        },
         "numberofSQLVM": {
             "type": "int"
         },
@@ -166,8 +154,8 @@
                 },
                 "osProfile": {
                     "computerName": "[concat(parameters('virtualmachineName'),copyIndex(1))]",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
+                    "adminUsername": "[parameters('DomainUserName')]",
+                    "adminPassword": "[parameters('DomainPassword')]"
                 },
                 "storageProfile": {
                     "imageReference": {
